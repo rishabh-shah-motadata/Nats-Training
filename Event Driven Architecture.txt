@@ -1,0 +1,34 @@
+Why Event Driven Architecture was introduced?
+1. Services were dependent on each other.
+2. One service going down would affect the entire system.
+3. Difficult to scale services independently.
+4. Inability to Support "Fan-out" scenarios.
+
+What is Event Driven Architecture?
+1. An architectural pattern that promotes the production, detection, consumption of, and reaction to events.
+2. An event is a significant change in state, or an update, that is meaningful within a system.
+3. It decouples services, allowing them to operate independently and communicate through events.
+
+What are the main components of Event Driven Architecture?
+1. Event Producers: Services that generate events when a change in state occurs.
+2. Event Consumers: Services that listen for and react to events.
+3. Event Channels or Topics: The medium through which events are transmitted from producers to consumers.
+4. Event Store: A storage system for persisting events for future reference or replay.
+5. Event Broker: A middleware that manages the distribution of events between producers and consumers.
+6. Queues: Used to store events temporarily until they are processed by consumers.
+
+What are the benefits of Event Driven Architecture?
+1. Decoupling: Services can operate independently, reducing dependencies.
+2. Scalability: Services can be scaled independently based on demand.
+3. Resilience: Failure of one service does not necessarily impact others.
+4. Flexibility: Easier to add or modify services without affecting the entire system.
+5. Improved Maintainability: Easier to manage and update individual services.
+
+Four Pillars of Event Driven Architecture
+1. Responsiveness: docker run -p 4444:4444 nats -p 4444
+  - The system should respond to events in a timely manner.
+2. Resilience: 
+  - The system should continue to function even when some components fail.
+  - It is achieved through redundancy, failover mechanisms, and graceful degradation.
+3. Elasticity: The system should be able to scale up or down based on demand.
+4. Message Driven: Communication between services should be based on messages (events) rather than direct calls.
