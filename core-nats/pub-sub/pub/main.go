@@ -25,7 +25,14 @@ func main() {
 		log.Println("Error connecting to NATS server:", err)
 		return
 	}
-	defer nc.Close()
+	defer nc.Drain()
+	/*
+		defer nc.Close() --- IGNORE ---
+		You should use Drain instead of Close to ensure all messages are sent before closing.
+		The Drain method allows the connection to finish processing any pending messages
+		before closing, which is important in a publish-subscribe scenario to avoid losing messages.
+		The close method immediately closes the connection, which may result in unsent messages being lost.
+	*/
 
 	log.Println("Connected to:", nc.ConnectedUrl())
 

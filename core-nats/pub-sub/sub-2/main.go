@@ -24,7 +24,7 @@ func main() {
 		log.Println("Error connecting to NATS server:", err)
 		return
 	}
-	defer nc.Close()
+	defer nc.Drain()
 
 	log.Println("Connected to:", nc.ConnectedUrl())
 
