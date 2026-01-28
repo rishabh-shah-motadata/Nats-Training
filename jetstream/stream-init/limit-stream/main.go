@@ -41,7 +41,8 @@ func main() {
 
 	stream, err := js.AddStream(streamConfig)
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
+		return
 	}
 
 	fmt.Println("Stream created:")
