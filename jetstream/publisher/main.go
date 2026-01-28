@@ -23,7 +23,7 @@ func main() {
 	}
 
 	for i := 1; i <= 5; i++ {
-		data := []byte(fmt.Sprintf("order-id-%d", i))
+		data := fmt.Appendf(nil, "order-id-%d", i)
 
 		ack, err := js.Publish("orders.created", data)
 		if err != nil {
