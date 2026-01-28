@@ -17,7 +17,7 @@ func main() {
 		log.Println("Error connecting to NATS server:", err)
 		return
 	}
-	defer nc.Close()
+	defer nc.Drain()
 
 	// Create JetStream context
 	// Its through this context that we can manage streams and consumers
@@ -35,7 +35,7 @@ func main() {
 		Storage:   nats.FileStorage,
 		Retention: nats.LimitsPolicy,
 		MaxMsgs:   1000,
-		MaxAge:    time.Second,
+		MaxAge:    time.Hour,
 		Discard:   nats.DiscardOld,
 	}
 

@@ -15,7 +15,7 @@ func main() {
 	if err != nil {
 		log.Println("failed to connect with nats server")
 	}
-	defer nc.Close()
+	defer nc.Drain()
 
 	js, err := nc.JetStream()
 	if err != nil {
