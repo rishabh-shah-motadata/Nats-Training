@@ -1,3 +1,5 @@
+version: "3.9"
+
 services:
   nats-1:
     image: nats:latest
@@ -10,6 +12,10 @@ services:
       -cluster_name nats-cluster
       -cluster nats://0.0.0.0:6222
       -routes nats://nats-2:6222,nats://nats-3:6222
+      --jetstream
+      --store_dir /data/jetstream
+    volumes:
+      - nats1-data:/data
     networks:
       - nats-net
 
@@ -24,6 +30,10 @@ services:
       -cluster_name nats-cluster
       -cluster nats://0.0.0.0:6222
       -routes nats://nats-1:6222,nats://nats-3:6222
+      --jetstream
+      --store_dir /data/jetstream
+    volumes:
+      - nats2-data:/data
     networks:
       - nats-net
 
@@ -38,8 +48,17 @@ services:
       -cluster_name nats-cluster
       -cluster nats://0.0.0.0:6222
       -routes nats://nats-1:6222,nats://nats-2:6222
+      --jetstream
+      --store_dir /data/jetstream
+    volumes:
+      - nats3-data:/data
     networks:
       - nats-net
+
+volumes:
+  nats1-data:
+  nats2-data:
+  nats3-data:
 
 networks:
   nats-net:
