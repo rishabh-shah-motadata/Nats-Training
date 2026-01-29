@@ -1,13 +1,10 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"log"
-	"time"
 
 	"github.com/nats-io/nats.go"
-	"github.com/nats-io/nats.go/jetstream"
 )
 
 func main() {
@@ -25,35 +22,26 @@ func main() {
 	// Its through this context that we can manage streams and consumers
 	// nc is the core NATS connection, while js is the JetStream specific context
 	// that provides the higher level JetStream API functionality
-	// js, err := nc.JetStream()
-	// if err != nil {
-	// 	log.Println("Error creating JetStream context:", err)
-	// 	return
-	// }
-
-	js, err := jetstream.New(nc)
+	js, err := nc.JetStream()
 	if err != nil {
 		log.Println("Error creating JetStream context:", err)
 		return
 	}
 
-	streamConfig := jetstream.StreamConfig{
-		Name:      "LIMIT_ORDERS",
+	streamConfig := &nats.StreamConfig{
+		Name:      "INTEREST_ORDERS",
 		Subjects:  []string{"orders.*"},
-		Storage:   jetstream.FileStorage,
-		Retention: jetstream.LimitsPolicy,
-		MaxMsgs:   1000,
-		MaxAge:    time.Hour,
-		Discard:   jetstream.DiscardOld,
+		Storage:   nats.FileStorage,
+		Retention: nats.InterestPolicy,
 	}
 
-	stream, err := js.CreateStream(context.Background(), streamConfig)
+	stream, err := js.AddStream(streamConfig)
 	if err != nil {
 		log.Println(err)
 		return
 	}
 
 	fmt.Println("Stream created:")
-	fmt.Printf("Name: %s\n", stream.CachedInfo().Config.Name)
-	fmt.Printf("Subjects: %v\n", stream.CachedInfo().Config.Subjects)
+	fmt.Printf("Name: %s\n", stream.Config.Name)
+	fmt.Printf("Subjects: %v\n", stream.Config.Subjects)
 }

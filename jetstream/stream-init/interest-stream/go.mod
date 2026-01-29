@@ -1,4 +1,4 @@
-module nats-limit-stream
+module nats-interest-stream
 
 go 1.25.3
 

@@ -26,6 +26,7 @@ jetstream/
 
    * Run **once** per environment (dev/test/prod).
    * Defines the **stream configuration**: name, subjects, storage, retention, discard policy, replicas, and limits.
+   * It also defines the consumer configuration which will be bind by consumer workers.
    * Example:
 
      ```text

@@ -24,17 +24,10 @@ func main() {
 		return
 	}
 
-	defer func() {
-		if err := js.DeleteConsumer("ORDERS", "ORDER_CONSUMER"); err != nil {
-			log.Println("failed to delete consumer:", err)
-		}
-		log.Println("Consumer deleted")
-	}()
-
 	msgs, err := js.PullSubscribe(
 		"orders.created",
 		"ORDER_CONSUMER", // By just providing a name, we make it a durable consumer, if we put "", it will be an ephemeral consumer
-		nats.BindStream("ORDERS"),
+		nats.BindStream("LIMIT_ORDERS"),
 		nats.AckExplicit(),
 		nats.MaxAckPending(5),
 		nats.AckWait(1*time.Second),
