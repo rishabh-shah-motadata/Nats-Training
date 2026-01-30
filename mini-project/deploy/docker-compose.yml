@@ -1,0 +1,104 @@
+services:
+  nats-1:
+    image: nats:latest
+    container_name: nats-1
+    ports:
+      - "4222:4222"   # client port
+      - "8222:8222"   # monitoring
+    command: >
+      -server_name nats-1
+      -cluster_name nats-cluster
+      -cluster nats://0.0.0.0:6222
+      -routes nats://nats-2:6222,nats://nats-3:6222
+      --jetstream
+      --store_dir /data/jetstream
+    volumes:
+      - nats1-data:/data
+    networks:
+      - nats-net
+      - apps-net
+
+  nats-2:
+    image: nats:latest
+    container_name: nats-2
+    ports:
+      - "4223:4222"
+      - "8223:8222"
+    command: >
+      -server_name nats-2
+      -cluster_name nats-cluster
+      -cluster nats://0.0.0.0:6222
+      -routes nats://nats-1:6222,nats://nats-3:6222
+      --jetstream
+      --store_dir /data/jetstream
+    volumes:
+      - nats2-data:/data
+    networks:
+      - nats-net
+      - apps-net
+
+  nats-3:
+    image: nats:latest
+    container_name: nats-3
+    ports:
+      - "4224:4222"
+      - "8224:8222"
+    command: >
+      -server_name nats-3
+      -cluster_name nats-cluster
+      -cluster nats://0.0.0.0:6222
+      -routes nats://nats-1:6222,nats://nats-2:6222
+      --jetstream
+      --store_dir /data/jetstream
+    volumes:
+      - nats3-data:/data
+    networks:
+      - nats-net
+      - apps-net
+
+  postgres:
+    image: postgres:latest
+    container_name: postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: orders_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres:/var/lib/postgresql/data
+    networks:
+      - apps-net
+  
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin
+    ports:
+      - "5050:80"
+    depends_on:
+      - postgres
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: admin123
+    volumes:
+      - pgadmin:/var/lib/pgadmin
+    networks:
+      - apps-net
+
+volumes:
+  nats1-data:
+    driver: local
+  nats2-data:
+    driver: local
+  nats3-data:
+    driver: local
+  postgres:
+    driver: local
+  pgadmin:
+    driver: local
+
+networks:
+  nats-net:
+    driver: bridge
+  apps-net:
+    driver: bridge
