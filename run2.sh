@@ -10,7 +10,7 @@ echo "================================================"
 i=1
 while [ $i -le $NUM_REQUESTS ]; do
     # Format order ID with leading zeros (order-001, order-002, etc.)
-    ORDER_ID=$(printf "order-%03d" $((i+100)))
+    ORDER_ID=$(printf "order-%03d" $((i)))
     
     # Simple sequential item selection (sh doesn't support arrays well)
     ITEM_NUM=$((i % 10))

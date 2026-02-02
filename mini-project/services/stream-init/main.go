@@ -59,8 +59,6 @@ func main() {
 		MaxAckPending: 5,
 		MaxDeliver:    2,
 		ReplayPolicy:  jetstream.ReplayInstantPolicy,
-		DeliverPolicy: jetstream.DeliverAllPolicy,
-		DeliverSubject: "deliver.orders.created",
 	})
 	if err != nil {
 		log.Println("error creating consumer:", err)

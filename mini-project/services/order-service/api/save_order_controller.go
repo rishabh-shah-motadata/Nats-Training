@@ -31,17 +31,8 @@ func saveOrderHandler(pgxPool *pgxpool.Pool, js jetstream.JetStream) gin.Handler
 		}
 		newOrder.Status = "PENDING"
 
-		// Start a transaction
-		tx, err := pgxPool.Begin(ctx)
-		if err != nil {
-			log.Println("error starting transaction", err)
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to start transaction"})
-			return
-		}
-		defer tx.Rollback(ctx)
-
 		// Save order to PostgreSQL
-		_, err = tx.Exec(ctx, "INSERT INTO orders (id, item, amount, status) VALUES ($1, $2, $3, $4)",
+		_, err := pgxPool.Exec(ctx, "INSERT INTO orders (id, item, amount, status) VALUES ($1, $2, $3, $4)",
 			newOrder.ID, newOrder.Item, newOrder.Amount, newOrder.Status)
 		if err != nil {
 			log.Println("error saving order to postgres", err)
@@ -58,14 +49,6 @@ func saveOrderHandler(pgxPool *pgxpool.Pool, js jetstream.JetStream) gin.Handler
 			return
 		}
 		log.Println("published order created event with ack:", ack)
-
-		// Commit the transaction
-		err = tx.Commit(ctx)
-		if err != nil {
-			log.Println("error committing transaction", err)
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to commit transaction"})
-			return
-		}
 
 		c.JSON(http.StatusCreated, gin.H{"status": "order created", "order_id": newOrder.ID})
 	}
