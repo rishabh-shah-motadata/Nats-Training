@@ -1,0 +1,3 @@
+Mirroring is the concept where a data is being replicated across the clusters. Let say there is cluster 1 and in it there is a Nats server, so if we need to replicate it across another cluster server, we can do it via mirroring. It will contain the replica of data as it was doing it among the clusters.
+All the reads will go to replicated cluster server but any writes will go the leader cluster.
+The mirroring is mainly used to reduce the latency as there can be situations where one consumer wants to read from the stream which is in different region and thus to minimize the latency, mirroring was introduced.

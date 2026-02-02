@@ -1,0 +1,16 @@
+Core Nats:
+https://natsbyexample.com/
+
+Services Endpoints
+https://natsbyexample.com/
+https://www.youtube.com/watch?v=AiUazlrtgyU
+
+Youtube playlist for jetstream:
+https://www.youtube.com/playlist?list=PLgqCaaYodvKZ0JDTEOryCoJDeLVNvMWpj
+
+KV Store:
+https://natsbyexample.com/examples/kv/intro/go // Just look at this and then watch the video
+https://www.youtube.com/watch?v=XLJ5_5MsgGQ&list=PLgqCaaYodvKZ0JDTEOryCoJDeLVNvMWpj&index=6
+
+Claude Code for Object Store:
+https://claude.ai/chat/04e4eb0e-3946-4be8-b39b-b17ac00c35f2
