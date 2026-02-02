@@ -39,7 +39,7 @@ func main() {
 		MaxConsumers: 3,
 	}
 
-	stream, err := js.CreateStream(ctx, streamConfig)
+	stream, err := js.CreateOrUpdateStream(ctx, streamConfig)
 	if err != nil {
 		log.Println("error creating stream:", err)
 		return
@@ -52,7 +52,7 @@ func main() {
 	}
 	log.Println("stream created successfully:", streamInfo.Config.Name)
 
-	consumer, err := js.CreateConsumer(ctx, streamConfig.Name, jetstream.ConsumerConfig{
+	consumer, err := stream.CreateOrUpdateConsumer(ctx, jetstream.ConsumerConfig{
 		Durable:       "ORDER_CONSUMER",
 		AckPolicy:     jetstream.AckExplicitPolicy,
 		FilterSubject: "orders.created",

@@ -9,9 +9,10 @@ import (
 	"os"
 	"os/signal"
 	"sync"
+	"time"
 
 	"github.com/jackc/pgx/v4/pgxpool"
-	"github.com/nats-io/nats.go"
+	"github.com/nats-io/nats.go/jetstream"
 )
 
 func main() {
@@ -21,7 +22,7 @@ func main() {
 	signal.Notify(quit, os.Interrupt)
 
 	// Channel for workerpool
-	msgChan := make(chan *nats.Msg, 100)
+	msgChan := make(chan jetstream.Msg, 100)
 
 	// Initialize NATS Connection
 	nc, err := ns.InitNATS("Consumer-1")
@@ -42,50 +43,52 @@ func main() {
 
 	// Setup workerpool
 	numWorkers := 5
-	for i := 0; i < numWorkers; i++ {
+	for range numWorkers {
 		wg.Go(func() {
 			processMessages(msgChan, pgPool)
 		})
 	}
 
 	// Create JetStream Context
-	js, err := nc.JetStream()
+	js, err := jetstream.New(nc)
 	if err != nil {
 		log.Fatal("error creating JetStream context:", err)
 		return
 	}
 
-	subs, err := js.Subscribe(
-		"orders.created",
-		func(msg *nats.Msg) {
-			msgChan <- msg
-		},
-		nats.Bind("ORDERS", "ORDER_CONSUMER"),
-		nats.AckExplicit(),
-		nats.MaxAckPending(5),
-		nats.MaxDeliver(2),
-		nats.ReplayInstant(),
-	)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	consumer, err := js.Consumer(ctx, "ORDERS", "ORDER_CONSUMER")
 	if err != nil {
 		log.Fatal("error subscribing to subject:", err)
 		return
 	}
 
+	cctx, err := consumer.Consume(func(msg jetstream.Msg) {
+		msgChan <- msg
+	})
+	if err != nil {
+		log.Fatal("error creating consumer context:", err)
+		return
+	}
+	log.Println("consumer started, waiting for messages...")
+
 	<-quit
 	log.Println("shutting down consumer...")
-	err = subs.Drain()
-	if err != nil {
-		log.Println("error draining subscription:", err)
-	}
+	cctx.Drain()
+	close(msgChan)
+	wg.Wait()
+	log.Println("consumer shut down gracefully")
 }
 
-func processMessages(msgChan chan *nats.Msg, pgxPool *pgxpool.Pool) {
+func processMessages(msgChan chan jetstream.Msg, pgxPool *pgxpool.Pool) {
 	for msg := range msgChan {
 		var payload struct {
 			ID string `json:"id"`
 		}
 
-		err := json.Unmarshal(msg.Data, &payload)
+		err := json.Unmarshal(msg.Data(), &payload)
 		if err != nil {
 			log.Printf("error unmarshalling message: %v", err)
 			msg.Nak()

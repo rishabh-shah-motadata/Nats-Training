@@ -11,6 +11,8 @@ import (
 	"os"
 	"os/signal"
 	"time"
+
+	"github.com/nats-io/nats.go/jetstream"
 )
 
 func main() {
@@ -38,7 +40,7 @@ func main() {
 	log.Println("connected to NATS server:", nc.ConnectedUrl())
 
 	// Create JetStream Context
-	js, err := nc.JetStream()
+	js, err := jetstream.New(nc)
 	if err != nil {
 		log.Fatal("error creating JetStream context:", err)
 		return

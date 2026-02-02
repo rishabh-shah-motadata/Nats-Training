@@ -8,7 +8,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v4/pgxpool"
-	"github.com/nats-io/nats.go"
+	"github.com/nats-io/nats.go/jetstream"
 )
 
 type order struct {
@@ -18,7 +18,7 @@ type order struct {
 	Status string  `json:"status"`
 }
 
-func saveOrderHandler(pgxPool *pgxpool.Pool, js nats.JetStreamContext) gin.HandlerFunc {
+func saveOrderHandler(pgxPool *pgxpool.Pool, js jetstream.JetStream) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second)
 		defer cancel()
@@ -51,7 +51,7 @@ func saveOrderHandler(pgxPool *pgxpool.Pool, js nats.JetStreamContext) gin.Handl
 
 		// Publish order created event to NATS JetStream
 		data := []byte(`{"id": "` + newOrder.ID + `"}`)
-		ack, err := js.Publish("orders.created", data)
+		ack, err := js.Publish(ctx, "orders.created", data)
 		if err != nil {
 			log.Println("error publishing order created event to NATS JetStream", err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to publish order created event"})
