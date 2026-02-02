@@ -50,7 +50,7 @@ func saveOrderHandler(pgxPool *pgxpool.Pool, js nats.JetStreamContext) gin.Handl
 		}
 
 		// Publish order created event to NATS JetStream
-		data := []byte(newOrder.ID)
+		data := []byte(`{"id": "` + newOrder.ID + `"}`)
 		ack, err := js.Publish("orders.created", data)
 		if err != nil {
 			log.Println("error publishing order created event to NATS JetStream", err)

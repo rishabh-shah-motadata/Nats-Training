@@ -33,6 +33,8 @@ func main() {
 		nats.AckWait(1*time.Second),
 		nats.MaxDeliver(2),
 		nats.ReplayInstant(),
+		nats.DeliverAll(),
+		// nats.DeliverSubject("delivery.orders.created"), // This will make the consumer a push based consumer
 	)
 	if err != nil {
 		log.Println("failed to subscribe to subject:", err)

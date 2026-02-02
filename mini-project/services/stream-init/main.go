@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"log"
+	"nats-project/internal/db"
 	"nats-project/internal/nats"
 	"time"
 
@@ -56,9 +57,10 @@ func main() {
 		AckPolicy:     jetstream.AckExplicitPolicy,
 		FilterSubject: "orders.created",
 		MaxAckPending: 5,
-		AckWait:       time.Second * 1,
 		MaxDeliver:    2,
 		ReplayPolicy:  jetstream.ReplayInstantPolicy,
+		DeliverPolicy: jetstream.DeliverAllPolicy,
+		DeliverSubject: "deliver.orders.created",
 	})
 	if err != nil {
 		log.Println("error creating consumer:", err)
@@ -71,4 +73,23 @@ func main() {
 		return
 	}
 	log.Println("consumer created successfully:", consumerInfo.Name)
+
+	pgPool, err := db.InitPostgresDB(ctx)
+	if err != nil {
+		log.Println("error initializing postgres database:", err)
+		return
+	}
+	defer pgPool.Close()
+
+	_, err = pgPool.Exec(ctx, `CREATE TABLE orders (
+		id TEXT PRIMARY KEY,
+		item TEXT NOT NULL,
+		amount DOUBLE PRECISION NOT NULL,
+		status TEXT NOT NULL
+	);`)
+	if err != nil {
+		log.Println("error creating orders table:", err)
+		return
+	}
+	log.Println("orders table created successfully in postgres database")
 }
