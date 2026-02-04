@@ -1,0 +1,94 @@
+services:
+  # ========================================
+  # NATS Cluster Nodes (with JetStream)
+  # ========================================
+  
+  nats-1:
+    image: nats:2.10-alpine
+    container_name: nats-1
+    command: 
+      - "-c"
+      - "/etc/nats/nats-1.conf"
+    ports:
+      - "4222:4222"   # Client connections
+      - "8222:8222"   # Monitoring HTTP
+      - "6222:6222"   # Cluster routing
+      - "7422:7422"   # Leafnode connections
+    volumes:
+      - ./cluster/nats_1.conf:/etc/nats/nats-1.conf:ro
+      - nats1-data:/data/jetstream
+    networks:
+      - nats-network
+
+  nats-2:
+    image: nats:2.10-alpine
+    container_name: nats-2
+    command:
+      - "-c"
+      - "/etc/nats/nats-2.conf"
+    ports:
+      - "4223:4222"
+      - "8223:8222"
+      - "6223:6222"
+      - "7423:7422"
+    volumes:
+      - ./cluster/nats_2.conf:/etc/nats/nats-2.conf:ro
+      - nats2-data:/data/jetstream
+    networks:
+      - nats-network
+
+  nats-3:
+    image: nats:2.10-alpine
+    container_name: nats-3
+    command:
+      - "-c"
+      - "/etc/nats/nats-3.conf"
+    ports:
+      - "4224:4222"
+      - "8224:8222"
+      - "6224:6222"
+      - "7424:7422"
+    volumes:
+      - ./cluster/nats_3.conf:/etc/nats/nats-3.conf:ro
+      - nats3-data:/data/jetstream
+    networks:
+      - nats-network
+
+  # ========================================
+  # Leafnode Server (NO JetStream)
+  # ========================================
+  
+  leaf-1:
+    image: nats:2.10-alpine
+    container_name: leaf-1
+    command:
+      - "-c"
+      - "/etc/nats/leaf.conf"
+    ports:
+      - "4225:4222"   # Client connections
+      - "8225:8222"   # Monitoring HTTP
+    volumes:
+      - ./leafnode/leaf.conf:/etc/nats/leaf.conf:ro
+      - leaf1-data:/data/jetstream
+    networks:
+      - nats-network
+    depends_on:
+      - nats-1
+      - nats-2
+      - nats-3
+
+# ========================================
+# Volumes for JetStream persistence
+# ========================================
+volumes:
+  nats1-data:
+  nats2-data:
+  nats3-data:
+  leaf1-data:
+
+# ========================================
+# Network
+# ========================================
+networks:
+  nats-network:
+    driver: bridge
