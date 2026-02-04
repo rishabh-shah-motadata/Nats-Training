@@ -1,2 +1,2 @@
-docker rm -f nats-1 nats-2 nats-3 leaf-1
-docker volume rm -f leafnode_nats1-data leafnode_nats2-data leafnode_nats3-data
+docker rm -f nats-1 nats-2 nats-3 leafnode
+docker volume rm -f leafnode_leaf1-data leafnode_leafnode-data leafnode_nats-1-data leafnode_nats-2-data leafnode_nats-3-data

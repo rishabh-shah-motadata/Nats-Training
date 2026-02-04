@@ -1,94 +1,87 @@
+networks:
+  nats-network:
+    driver: bridge
+    name: nats-leafnet
+
 services:
-  # ========================================
-  # NATS Cluster Nodes (with JetStream)
-  # ========================================
-  
+  # Core NATS Cluster - Node 1
   nats-1:
-    image: nats:2.10-alpine
+    image: nats:latest
     container_name: nats-1
-    command: 
-      - "-c"
-      - "/etc/nats/nats-1.conf"
-    ports:
-      - "4222:4222"   # Client connections
-      - "8222:8222"   # Monitoring HTTP
-      - "6222:6222"   # Cluster routing
-      - "7422:7422"   # Leafnode connections
+    command: [
+      "-c", "/etc/nats-config/nats-1.conf"
+    ]
     volumes:
-      - ./cluster/nats_1.conf:/etc/nats/nats-1.conf:ro
-      - nats1-data:/data/jetstream
+      - ./cluster/nats_1.conf:/etc/nats-config/nats-1.conf
+      - nats-1-data:/data/jetstream
+    ports:
+      - "4222:4222"   # Client port
+      - "8222:8222"   # Monitoring
     networks:
       - nats-network
+    restart: unless-stopped
 
+  # Core NATS Cluster - Node 2
   nats-2:
-    image: nats:2.10-alpine
+    image: nats:latest
     container_name: nats-2
-    command:
-      - "-c"
-      - "/etc/nats/nats-2.conf"
-    ports:
-      - "4223:4222"
-      - "8223:8222"
-      - "6223:6222"
-      - "7423:7422"
+    command: [
+      "-c", "/etc/nats-config/nats-2.conf"
+    ]
     volumes:
-      - ./cluster/nats_2.conf:/etc/nats/nats-2.conf:ro
-      - nats2-data:/data/jetstream
+      - ./cluster/nats_2.conf:/etc/nats-config/nats-2.conf
+      - nats-2-data:/data/jetstream
+    ports:
+      - "4223:4223"
+      - "8223:8223"
     networks:
       - nats-network
+    restart: unless-stopped
+    depends_on:
+      - nats-1
 
+  # Core NATS Cluster - Node 3
   nats-3:
-    image: nats:2.10-alpine
+    image: nats:latest
     container_name: nats-3
-    command:
-      - "-c"
-      - "/etc/nats/nats-3.conf"
-    ports:
-      - "4224:4222"
-      - "8224:8222"
-      - "6224:6222"
-      - "7424:7422"
+    command: [
+      "-c", "/etc/nats-config/nats-3.conf"
+    ]
     volumes:
-      - ./cluster/nats_3.conf:/etc/nats/nats-3.conf:ro
-      - nats3-data:/data/jetstream
+      - ./cluster/nats_3.conf:/etc/nats-config/nats-3.conf
+      - nats-3-data:/data/jetstream
+    ports:
+      - "4224:4224"
+      - "8224:8224"
     networks:
       - nats-network
+    restart: unless-stopped
+    depends_on:
+      - nats-1
 
-  # ========================================
-  # Leafnode Server (NO JetStream)
-  # ========================================
-  
-  leaf-1:
-    image: nats:2.10-alpine
-    container_name: leaf-1
-    command:
-      - "-c"
-      - "/etc/nats/leaf.conf"
-    ports:
-      - "4225:4222"   # Client connections
-      - "8225:8222"   # Monitoring HTTP
+  # Leafnode Server
+  leafnode:
+    image: nats:latest
+    container_name: leafnode
+    command: [
+      "-c", "/etc/nats-config/leaf.conf"
+    ]
     volumes:
-      - ./leafnode/leaf.conf:/etc/nats/leaf.conf:ro
-      - leaf1-data:/data/jetstream
+      - ./leafnode/leaf.conf:/etc/nats-config/leaf.conf
+      - leafnode-data:/data/jetstream
+    ports:
+      - "4221:4221"   # Client port for leafnode
+      - "8221:8221"   # Leafnode monitoring
     networks:
       - nats-network
+    restart: unless-stopped
     depends_on:
       - nats-1
       - nats-2
       - nats-3
 
-# ========================================
-# Volumes for JetStream persistence
-# ========================================
 volumes:
-  nats1-data:
-  nats2-data:
-  nats3-data:
-  leaf1-data:
-
-# ========================================
-# Network
-# ========================================
-networks:
-  nats-network:
-    driver: bridge
+  nats-1-data:
+  nats-2-data:
+  nats-3-data:
+  leafnode-data:

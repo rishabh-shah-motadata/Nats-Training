@@ -25,28 +25,35 @@ func main() {
 	// Connect to LEAFNODE server (not cluster)
 	// This is the critical difference - connecting to leaf-1
 	nc, err := nats.Connect(
-		"nats://localhost:4225", // Leafnode port
+		"nats://localhost:4221", // Leafnode port
 		nats.Name("leaf-consumer"),
+		nats.UserInfo("app", "app"),
 		nats.ReconnectWait(2*time.Second),
 		nats.MaxReconnects(-1),
 	)
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer nc.Close()
+	defer nc.Drain()
 
 	fmt.Println("Connected to NATS leafnode at localhost:4225")
 
 	// Create JetStream context
 	// Even though connected to leafnode, this JS context
 	// will transparently route operations to the cluster
-	js, err := jetstream.New(nc)
+	js, err := jetstream.NewWithDomain(nc, "hub")
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
+
+	streamInfo, err := js.Stream(ctx, "ORDERS")
+	if err != nil {
+		log.Fatalf("Stream ORDERS not found via leafnode: %v", err)
+	}
+	log.Printf("Stream ORDERS found via leafnode: %+v", streamInfo.CachedInfo())
 
 	// Create or get consumer
 	// Consumer is created ON THE CLUSTER, not the leafnode
@@ -57,7 +64,6 @@ func main() {
 		Description:   "Consumer connected via leafnode",
 		FilterSubject: "orders.created",
 		AckPolicy:     jetstream.AckExplicitPolicy, // Manual acks
-		DeliverPolicy: jetstream.DeliverAllPolicy,  // Get all messages
 		MaxDeliver:    3,                           // Retry up to 3 times
 		AckWait:       30 * time.Second,            // Wait 30s for ack
 	})

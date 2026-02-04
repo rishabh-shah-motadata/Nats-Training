@@ -1,54 +1,61 @@
 package main
 
 import (
-    "context"
-    "fmt"
-    "log"
-    "time"
+	"context"
+	"fmt"
+	"log"
+	"time"
 
-    "github.com/nats-io/nats.go"
-    "github.com/nats-io/nats.go/jetstream"
+	"github.com/nats-io/nats.go"
+	"github.com/nats-io/nats.go/jetstream"
 )
 
 func main() {
-    // Connect to NATS cluster
-    nc, err := nats.Connect("nats://localhost:4222")
-    if err != nil {
-        log.Fatal(err)
-    }
-    defer nc.Close()
+	// Connect to NATS cluster
+	nc, err := nats.Connect("nats://localhost:4222", nats.UserInfo("app", "app"))
+	if err != nil {
+		log.Fatal("Failed to connect with Nats: ", err)
+	}
+	defer nc.Drain()
 
-    // Create JetStream context
-    js, err := jetstream.New(nc)
-    if err != nil {
-        log.Fatal(err)
-    }
+	// Create JetStream context
+	js, err := jetstream.NewWithDomain(nc, "hub")
+	if err != nil {
+		log.Fatal(err)
+	}
 
-    ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-    defer cancel()
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
 
-    // Create stream configuration
-    streamCfg := jetstream.StreamConfig{
-        Name:        "ORDERS",
-        Description: "Stream for order events",
-        Subjects:    []string{"orders.*"},
-        Storage:     jetstream.FileStorage,
-        Retention:   jetstream.LimitsPolicy,
-        MaxAge:      24 * time.Hour,
-        Discard:     jetstream.DiscardOld,
-        Replicas:    3, // Replicate across all 3 cluster nodes
-    }
+	// Create stream configuration
+	streamCfg := jetstream.StreamConfig{
+		Name:        "ORDERS",
+		Description: "Stream for order events",
+		Subjects:    []string{"orders.created"},
+		Storage:     jetstream.FileStorage,
+		Replicas:    3,
+		Retention:   jetstream.LimitsPolicy,
+		Discard:     jetstream.DiscardOld,
+		MaxMsgs:     -1, // No limit on number of messages
+		MaxBytes:    -1, // No limit on total bytes
+		MaxAge:      1 * time.Hour,
+		MaxMsgSize:  1024 * 1024, // 1MB
+		Duplicates:  2 * time.Minute,
+		AllowRollup: false,
+		DenyDelete:  false,
+		DenyPurge:   false,
+	}
 
-    // Create or update stream
-    stream, err := js.CreateOrUpdateStream(ctx, streamCfg)
-    if err != nil {
-        log.Fatalf("Failed to create stream: %v", err)
-    }
+	// Create or update stream
+	stream, err := js.CreateOrUpdateStream(ctx, streamCfg)
+	if err != nil {
+		log.Fatalf("Failed to create stream: %v", err)
+	}
 
-    fmt.Printf("✅ Stream created: %s\n", stream.CachedInfo().Config.Name)
-    fmt.Printf("   Subjects: %v\n", stream.CachedInfo().Config.Subjects)
-    fmt.Printf("   Replicas: %d\n", stream.CachedInfo().Config.Replicas)
-    fmt.Printf("   Storage: %s\n", stream.CachedInfo().Config.Storage)
+	fmt.Printf("✅ Stream created: %s\n", stream.CachedInfo().Config.Name)
+	fmt.Printf("   Subjects: %v\n", stream.CachedInfo().Config.Subjects)
+	fmt.Printf("   Replicas: %d\n", stream.CachedInfo().Config.Replicas)
+	fmt.Printf("   Storage: %s\n", stream.CachedInfo().Config.Storage)
 }
 
 /*

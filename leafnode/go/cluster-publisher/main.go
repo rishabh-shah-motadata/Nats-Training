@@ -24,6 +24,7 @@ func main() {
 	// nats.Connect("nats://localhost:4222,nats://localhost:4223,nats://localhost:4224")
 	nc, err := nats.Connect(
 		"nats://localhost:4222",
+		nats.UserInfo("app", "app"),
 		nats.Name("cluster-publisher"),
 		nats.ReconnectWait(2*time.Second),
 		nats.MaxReconnects(-1), // Infinite reconnects
@@ -31,14 +32,14 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer nc.Close()
+	defer nc.Drain()
 
 	fmt.Println("Connected to NATS cluster at localhost:4222")
 
 	// Create JetStream context
-	js, err := jetstream.New(nc)
+	js, err := jetstream.NewWithDomain(nc, "hub")
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("Failed to create context: ", err)
 	}
 
 	// Publish messages in a loop
